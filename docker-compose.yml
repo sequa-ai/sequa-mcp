@@ -1,0 +1,8 @@
+services:
+  sequa-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sequa/sequa-mcp:${TAG:-latest}
+    network_mode: "host"
+
