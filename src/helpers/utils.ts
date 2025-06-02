@@ -10,6 +10,10 @@ export function getTimestamp(): string {
 }
 
 export function debugLog(str: string, ...rest: any[]) {
+  if (!process.env.DEBUG) {
+    return
+  }
+
   console.error(`[DEBUG] [${process.pid}] ${str}`, ...rest)
 }
 

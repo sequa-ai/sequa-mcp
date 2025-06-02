@@ -49,8 +49,12 @@ export class AuthCoordinator {
 
           sendResponse(200, 'Authorization Completed')
 
+          log('Authorization code received')
+
           const transport = this.createRemoteTransport()
           await transport.finishAuth(code)
+
+          log('Authentication completed successfully')
         } catch (error) {
           log('Error handling auth callback:', error)
 
@@ -93,7 +97,7 @@ export class AuthCoordinator {
 
       const lockData = await this.configRepository.readConfig<LockData>('lock')
       if (!lockData || (lockData.expiresAt < new Date() && lockData.pid !== process.pid)) {
-        debugLog('No lock found, initiating authentication', lockData)
+        log('No lock found, initiating authentication')
 
         await this.configRepository.writeConfig<LockData>('lock', {
           pid: process.pid,
@@ -111,13 +115,13 @@ export class AuthCoordinator {
             continue
           }
 
-          debugLog('Error initiating authentication:', error)
+          log('Error initiating authentication:', error)
         }
       }
 
       debugLog('Waiting for tokens...')
 
-      await new Promise((res) => setTimeout(res, 1000))
+      await new Promise((res) => setTimeout(res, 2000))
     }
 
     return this.createRemoteTransport()

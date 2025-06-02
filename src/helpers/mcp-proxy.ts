@@ -59,7 +59,6 @@ export class McpProxy {
 
       log(`[${getTimestamp()}] Server -> Client: ${JSON.stringify(message)}`)
 
-      // Forward the message to the client
       this.transportToClient.send(message).catch((error) => {
         log('Error forwarding message to client', error)
       })

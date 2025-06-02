@@ -10,7 +10,7 @@ export class CliParser {
       const arg = args[i]
 
       if (arg === '-h' || arg === '--help') {
-        console.log(usage)
+        console.error(usage)
         process.exit(0)
       }
 
