@@ -19,20 +19,20 @@ Most IDEs currently speak MCP over STDIO **commands** and assume the proxy is re
 ### Via NPX
 
 ```bash
-npx -y @sequa-ai/sequa-mcp@latest  https://mcp.sequa.ai/<endpoint>
+npx -y @sequa-ai/sequa-mcp@latest https://mcp.sequa.ai/<endpoint>
 ```
 
 ### Via Docker
 
 ```bash
-docker run -i --rm --network host sequa/sequa-mcp:latest  https://mcp.sequa.ai/<endpoint>
+docker run -i --rm --network host sequa/sequa-mcp:latest https://mcp.sequa.ai/<endpoint>
 ```
 
 ---
 
 ## 🔌 Connect Your Favourite Tools
 
-> Replace ` https://mcp.sequa.ai/<endpoint>` with your actual Sequa MCP URL. **Always** use the `command` style until IDEs support HTTP‑stream URLs directly.
+> Replace `https://mcp.sequa.ai/<endpoint>` with your actual Sequa MCP URL. **Always** use the `command` style until IDEs support HTTP‑stream URLs directly.
 
 ### Cursor
 
@@ -46,7 +46,7 @@ docker run -i --rm --network host sequa/sequa-mcp:latest  https://mcp.sequa.ai/<
       "args": [
         "-y",
         "@sequa-ai/sequa-mcp@latest",
-        " https://mcp.sequa.ai/<endpoint>"
+        "https://mcp.sequa.ai/<endpoint>"
       ]
     }
   }
