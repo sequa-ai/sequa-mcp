@@ -13,12 +13,11 @@ async function startMcp(serverUrl: URL) {
   const configRepository = new ConfigRepository(serverUrl)
   const authCoordinator = new AuthCoordinator(configRepository)
 
-  const stopServer = await authCoordinator.startCallbackServer()
+  const cleanupFunctions: Array<() => unknown> = [await authCoordinator.startCallbackServer()]
+
   const remoteTransport = await authCoordinator.initRemoteTransport()
   const localTransport = new StdioServerTransport()
-  await stopServer()
 
-  const cleanupFunctions: Array<() => unknown> = []
   const cleanup = async () => {
     for (const cleanupFunction of cleanupFunctions.reverse()) {
       await cleanupFunction()
@@ -26,7 +25,7 @@ async function startMcp(serverUrl: URL) {
   }
 
   try {
-    await McpProxy.createProxy(localTransport, remoteTransport)
+    await McpProxy.createProxy(localTransport, remoteTransport, () => process.exit(0))
 
     await remoteTransport.start()
     cleanupFunctions.push(async () => remoteTransport.close())

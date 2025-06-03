@@ -3,8 +3,12 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { getTimestamp, log } from './utils.js'
 
 export class McpProxy {
-  public static async createProxy(transportToClient: Transport, transportToServer: Transport) {
-    const proxy = new McpProxy(transportToClient, transportToServer)
+  public static async createProxy(
+    transportToClient: Transport,
+    transportToServer: Transport,
+    onShutdown: () => Promise<void> = async () => {},
+  ) {
+    const proxy = new McpProxy(transportToClient, transportToServer, onShutdown)
     await proxy.initialize()
 
     return proxy
@@ -15,6 +19,7 @@ export class McpProxy {
   constructor(
     private readonly transportToClient: Transport,
     private readonly transportToServer: Transport,
+    private readonly onShutdown: () => Promise<void>,
   ) {}
 
   public async initialize() {
@@ -104,6 +109,8 @@ export class McpProxy {
 
       await this.safeClose(this.transportToClient)
       await this.safeClose(this.transportToServer)
+
+      await this.onShutdown()
     }
   }
 

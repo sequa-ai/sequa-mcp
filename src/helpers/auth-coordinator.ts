@@ -110,9 +110,12 @@ export class AuthCoordinator {
 
         try {
           const testTransport = this.createRemoteTransport()
-          const testClient = new Client({ name: 'proxy-authentication-test', version: '1.0.0' }, { capabilities: {} })
+          const testClient = new Client(
+            { name: 'sequa-mcp-authentication-test', version: '1.0.0' },
+            { capabilities: {} },
+          )
           await testClient.connect(testTransport)
-          await testClient.close()
+          await testTransport.close()
 
           lockFileCreated = false
           await this.configRepository.deleteConfig('lock')
