@@ -1,6 +1,6 @@
 {
   "name": "@sequa-ai/sequa-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A proxy for the Model Context Protocol (MCP) that connects local STDIO with remote MCP servers",
   "keywords": ["mcp", "model-context-protocol", "proxy", "ai", "sequa"],
   "author": "Sequa AI GmbH",
