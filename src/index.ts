@@ -5,7 +5,7 @@ import { AuthCoordinator } from './helpers/auth-coordinator.js'
 import { CliParser } from './helpers/cli-parser.js'
 import { ConfigRepository } from './helpers/config-repository.js'
 import { McpProxy } from './helpers/mcp-proxy.js'
-import { log, setupSignalHandlers } from './helpers/utils.js'
+import { log, setupShutdownHook } from './helpers/utils.js'
 
 async function startMcp(serverUrl: URL) {
   log(`Starting MCP proxy for ${serverUrl}`)
@@ -13,15 +13,17 @@ async function startMcp(serverUrl: URL) {
   const configRepository = new ConfigRepository(serverUrl)
   const authCoordinator = new AuthCoordinator(configRepository)
 
-  const cleanupFunctions: Array<() => unknown> = [await authCoordinator.startCallbackServer()]
+  const stopServer = await authCoordinator.startCallbackServer()
+  const remoteTransport = await authCoordinator.initRemoteTransport()
+  const localTransport = new StdioServerTransport()
+  await stopServer()
+
+  const cleanupFunctions: Array<() => unknown> = []
   const cleanup = async () => {
-    for (const cleanupFunction of cleanupFunctions) {
+    for (const cleanupFunction of cleanupFunctions.reverse()) {
       await cleanupFunction()
     }
   }
-
-  const remoteTransport = await authCoordinator.initRemoteTransport()
-  const localTransport = new StdioServerTransport()
 
   try {
     await McpProxy.createProxy(localTransport, remoteTransport)
@@ -36,7 +38,7 @@ async function startMcp(serverUrl: URL) {
     log(`Proxy established successfully between local STDIO and remote ${remoteTransport.constructor.name}`)
     log('Press Ctrl+C to exit')
 
-    setupSignalHandlers(cleanup)
+    setupShutdownHook(cleanup)
   } catch (error) {
     log('Fatal error:', error)
     await cleanup()

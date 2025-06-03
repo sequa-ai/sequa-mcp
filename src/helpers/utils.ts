@@ -21,17 +21,13 @@ export function log(str: string, ...rest: unknown[]) {
   console.error(`[LOG] [${process.pid}] ${str}`, ...rest)
 }
 
-export function setupSignalHandlers(cleanup: () => Promise<void>) {
-  process.on('SIGINT', async () => {
-    log('\nShutting down...')
+export function setupShutdownHook(cleanup: () => Promise<void>) {
+  const fn = async () => {
+    log('Shutting down...')
     await cleanup()
     process.exit(0)
-  })
+  }
 
-  process.stdin.resume()
-  process.stdin.on('end', async () => {
-    log('\nShutting down...')
-    await cleanup()
-    process.exit(0)
-  })
+  process.on('SIGINT', fn)
+  process.on('SIGTERM', fn)
 }

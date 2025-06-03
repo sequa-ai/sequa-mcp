@@ -10,7 +10,7 @@ import express from 'express'
 
 import type { ConfigRepository } from './config-repository.js'
 import { NodeOauthClientProvider } from './node-oauth-client-provider.js'
-import { debugLog, log } from './utils.js'
+import { debugLog, log, setupShutdownHook } from './utils.js'
 
 interface LockData {
   pid: number
@@ -90,24 +90,32 @@ export class AuthCoordinator {
   }
 
   public async initRemoteTransport() {
-    while (true) {
-      if (await this.getTokens()) {
-        break
+    let lockFileCreated = false
+    setupShutdownHook(async () => {
+      if (lockFileCreated) {
+        await this.configRepository.deleteConfig('lock')
       }
+    })
 
+    while (true) {
       const lockData = await this.configRepository.readConfig<LockData>('lock')
       if (!lockData || (lockData.expiresAt < new Date() && lockData.pid !== process.pid)) {
-        log('No lock found, initiating authentication')
+        log('Test remote authentication')
 
         await this.configRepository.writeConfig<LockData>('lock', {
           pid: process.pid,
           expiresAt: new Date(Date.now() + 1000 * 60 * 10),
         })
+        lockFileCreated = true
 
         try {
           const testTransport = this.createRemoteTransport()
-          const testClient = new Client({ name: 'authentication-test', version: '1.0.0' }, { capabilities: {} })
+          const testClient = new Client({ name: 'proxy-authentication-test', version: '1.0.0' }, { capabilities: {} })
           await testClient.connect(testTransport)
+          await testClient.close()
+
+          lockFileCreated = false
+          await this.configRepository.deleteConfig('lock')
 
           break
         } catch (error) {
@@ -115,7 +123,10 @@ export class AuthCoordinator {
             continue
           }
 
-          log('Error initiating authentication:', error)
+          lockFileCreated = false
+          await this.configRepository.deleteConfig('lock')
+
+          throw error
         }
       }
 

@@ -10,17 +10,12 @@ export class McpProxy {
     return proxy
   }
 
-  private transportToClient: Transport
-  private transportToServer: Transport
-  private clientClosed: boolean = false
-  private serverClosed: boolean = false
-  private clientErrored: boolean = false
-  private serverErrored: boolean = false
+  private running = true
 
-  constructor(transportToClient: Transport, transportToServer: Transport) {
-    this.transportToClient = transportToClient
-    this.transportToServer = transportToServer
-  }
+  constructor(
+    private readonly transportToClient: Transport,
+    private readonly transportToServer: Transport,
+  ) {}
 
   public async initialize() {
     this.transportToClient.onmessage = this.handleClientMessage.bind(this)
@@ -33,77 +28,88 @@ export class McpProxy {
     this.transportToServer.onerror = this.handleServerError.bind(this)
   }
 
-  private handleClientMessage(message: any) {
-    try {
-      if (this.serverClosed || this.serverErrored) {
-        log('Server connection closed or errored, cannot forward client message')
-        return
-      }
+  private async handleClientMessage(message: any) {
+    if (!this.running) {
+      return
+    }
 
+    try {
       log(`[${getTimestamp()}] Client -> Server: ${JSON.stringify(message)}`)
 
-      this.transportToServer.send(message).catch((error) => {
-        log('Error forwarding message to server', error)
+      await this.transportToServer.send(message).catch((error) => {
+        log('Error forwarding message to server:', error)
+        this.handleServerError(error instanceof Error ? error : new Error(String(error)))
       })
     } catch (error) {
-      log('Error handling client message:', error)
+      await this.handleClientError(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
-  private handleServerMessage(message: any) {
-    try {
-      if (this.clientClosed || this.clientErrored) {
-        log('Client connection closed or errored, cannot forward server message')
-        return
-      }
+  private async handleServerMessage(message: any) {
+    if (!this.running) {
+      return
+    }
 
+    try {
       log(`[${getTimestamp()}] Server -> Client: ${JSON.stringify(message)}`)
 
-      this.transportToClient.send(message).catch((error) => {
-        log('Error forwarding message to client', error)
+      await this.transportToClient.send(message).catch((error) => {
+        log('Error forwarding message to client:', error)
+        this.handleClientError(error instanceof Error ? error : new Error(String(error)))
       })
     } catch (error) {
-      log('Error handling server message:', error)
+      await this.handleServerError(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
-  private handleClientClose() {
-    this.clientClosed = true
+  private async handleClientClose() {
+    if (!this.running) {
+      return
+    }
+
     log('Client connection closed')
-
-    if (!this.serverClosed && !this.serverErrored) {
-      this.transportToServer.close().catch((error) => {
-        log('Error closing server connection', error)
-      })
-    }
+    await this.shutdown()
   }
 
-  private handleServerClose() {
-    this.serverClosed = true
+  private async handleServerClose() {
+    if (!this.running) {
+      return
+    }
+
     log('Server connection closed')
+    await this.shutdown()
+  }
 
-    if (!this.clientClosed && !this.clientErrored) {
-      this.transportToClient.close().catch((error) => {
-        log('Error closing client connection', error)
-      })
+  private async handleClientError(error: Error) {
+    if (!this.running) {
+      return
+    }
+
+    log('Client error received', error)
+    await this.shutdown()
+  }
+
+  private async handleServerError(error: Error) {
+    if (!this.running) {
+      return
+    }
+
+    log('Server error received', error)
+    await this.shutdown()
+  }
+
+  private async shutdown(): Promise<void> {
+    if (this.running) {
+      this.running = false
+
+      await this.safeClose(this.transportToClient)
+      await this.safeClose(this.transportToServer)
     }
   }
 
-  private handleClientError(error: Error) {
-    this.clientErrored = true
-    log('Client connection error:', error)
-
-    if (!this.serverClosed && !this.serverErrored) {
-      this.transportToServer.close().catch(() => {})
-    }
-  }
-
-  private handleServerError(error: Error) {
-    this.serverErrored = true
-    log('Server connection error:', error)
-
-    if (!this.clientClosed && !this.clientErrored) {
-      this.transportToClient.close().catch(() => {})
-    }
+  private async safeClose(transport: Transport): Promise<void> {
+    try {
+      await transport.close()
+    } catch {}
   }
 }
