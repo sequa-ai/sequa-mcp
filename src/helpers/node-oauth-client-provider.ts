@@ -8,7 +8,7 @@ export class NodeOauthClientProvider implements OAuthClientProvider {
   constructor(private readonly coordinator: AuthCoordinator) {}
 
   public get clientMetadata(): OAuthClientMetadata {
-    return { client_name: 'MCP', redirect_uris: [this.redirectUrl] }
+    return { client_name: 'Sequa MCP', redirect_uris: [this.redirectUrl] }
   }
 
   public get redirectUrl(): string {
