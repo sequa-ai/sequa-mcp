@@ -18,7 +18,7 @@ export function debugLog(str: string, ...rest: any[]) {
 }
 
 export function log(str: string, ...rest: unknown[]) {
-  if (!process.env.LOGGING) {
+  if (!process.env.LOGGING && !process.env.DEBUG) {
     return
   }
 
