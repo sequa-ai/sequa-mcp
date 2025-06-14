@@ -18,6 +18,10 @@ export function debugLog(str: string, ...rest: any[]) {
 }
 
 export function log(str: string, ...rest: unknown[]) {
+  if (!process.env.LOGGING) {
+    return
+  }
+
   console.error(`[LOG] [${process.pid}] ${str}`, ...rest)
 }
 
