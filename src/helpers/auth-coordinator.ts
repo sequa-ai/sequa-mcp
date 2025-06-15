@@ -31,7 +31,7 @@ export class AuthCoordinator {
   constructor(private readonly configRepository: ConfigRepository) {}
 
   public async startCallbackServer() {
-    return new Promise<() => unknown>((resolve, reject) => {
+    return new Promise<() => unknown>(async (resolve, reject) => {
       const app = express()
 
       app.get('/auth/callback', async (req: Request, res: Response) => {
@@ -72,7 +72,7 @@ export class AuthCoordinator {
         }
       })
 
-      const serverPort = this.configRepository.readConfig<number>('auth-server-port')
+      const serverPort = await this.configRepository.readConfig<number>('auth-server-port')
       this.server = app.listen(serverPort || 0, (err) => {
         if (err) {
           log('Error starting authentication server:', err)
