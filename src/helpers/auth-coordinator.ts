@@ -140,15 +140,16 @@ export class AuthCoordinator {
             continue
           }
 
+          lockFileCreated = false
+          await this.configRepository.deleteConfig('lock')
+
           if (currentTransportIndex < availableTransports.length - 1) {
+            debugLog(`Error with transport ${availableTransports[currentTransportIndex]}:`, error)
             currentTransportIndex++
             log(`Switching to next transport: ${availableTransports[currentTransportIndex]}`)
 
             continue
           }
-
-          lockFileCreated = false
-          await this.configRepository.deleteConfig('lock')
 
           throw error
         }
@@ -208,7 +209,7 @@ export class AuthCoordinator {
     await this.configRepository.writeConfig<string>('code-verifier', codeVerifier)
   }
 
-  public createRemoteTransport(type: TransportType): Transport {
+  private createRemoteTransport(type: TransportType): Transport {
     if (type === TransportType.StreamableHTTP) {
       return new StreamableHTTPClientTransport(this.configRepository.getServerUrl(), {
         authProvider: this.getAuthProvider(),
