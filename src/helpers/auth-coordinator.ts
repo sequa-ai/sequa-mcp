@@ -1,10 +1,13 @@
 import type * as http from 'node:http'
 
-import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
+import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js'
+import { auth, UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type { OAuthClientInformation } from '@modelcontextprotocol/sdk/shared/auth.js'
 import type { OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js'
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import type { Request, Response } from 'express'
 import express from 'express'
 
@@ -15,6 +18,11 @@ import { debugLog, log, setupShutdownHook } from './utils.js'
 interface LockData {
   pid: number
   expiresAt: Date
+}
+
+enum TransportType {
+  StreamableHTTP = 'streamable-http',
+  SSE = 'sse',
 }
 
 export class AuthCoordinator {
@@ -51,8 +59,10 @@ export class AuthCoordinator {
 
           log('Authorization code received')
 
-          const transport = this.createRemoteTransport()
-          await transport.finishAuth(code)
+          await auth(this.getAuthProvider(), {
+            serverUrl: this.configRepository.getServerUrl(),
+            authorizationCode: code,
+          })
 
           log('Authentication completed successfully')
         } catch (error) {
@@ -62,7 +72,8 @@ export class AuthCoordinator {
         }
       })
 
-      this.server = app.listen(0, (err) => {
+      const serverPort = this.configRepository.readConfig<number>('auth-server-port')
+      this.server = app.listen(serverPort || 0, (err) => {
         if (err) {
           log('Error starting authentication server:', err)
 
@@ -89,13 +100,16 @@ export class AuthCoordinator {
     })
   }
 
-  public async initRemoteTransport() {
+  public async initRemoteTransport(): Promise<Transport> {
     let lockFileCreated = false
     setupShutdownHook(async () => {
       if (lockFileCreated) {
         await this.configRepository.deleteConfig('lock')
       }
     })
+
+    const availableTransports = Object.values(TransportType)
+    let currentTransportIndex = 0
 
     while (true) {
       const lockData = await this.configRepository.readConfig<LockData>('lock')
@@ -109,7 +123,7 @@ export class AuthCoordinator {
         lockFileCreated = true
 
         try {
-          const testTransport = this.createRemoteTransport()
+          const testTransport = this.createRemoteTransport(availableTransports[currentTransportIndex])
           const testClient = new Client(
             { name: 'sequa-mcp-authentication-test', version: '1.0.0' },
             { capabilities: {} },
@@ -126,6 +140,13 @@ export class AuthCoordinator {
             continue
           }
 
+          if (currentTransportIndex < availableTransports.length - 1) {
+            currentTransportIndex++
+            log(`Switching to next transport: ${availableTransports[currentTransportIndex]}`)
+
+            continue
+          }
+
           lockFileCreated = false
           await this.configRepository.deleteConfig('lock')
 
@@ -138,21 +159,25 @@ export class AuthCoordinator {
       await new Promise((res) => setTimeout(res, 2000))
     }
 
-    return this.createRemoteTransport()
+    return this.createRemoteTransport(availableTransports[currentTransportIndex])
   }
 
   public getServerUrl(): URL {
     return this.configRepository.getServerUrl()
   }
 
-  public getRedirectUrl(): string {
+  public getCallbackPort(): number {
     const address = this.server?.address()
 
     if (!address || typeof address === 'string') {
       throw new Error('Redirect URL cannot be retrieved before server is started')
     }
 
-    return `http://localhost:${address.port}/auth/callback`
+    return address.port
+  }
+
+  public getRedirectUrl(): string {
+    return `http://localhost:${this.getCallbackPort()}/auth/callback`
   }
 
   public async getClientInformation(): Promise<OAuthClientInformation | undefined> {
@@ -160,6 +185,7 @@ export class AuthCoordinator {
   }
 
   public async saveClientInformation(clientInformation: OAuthClientInformation): Promise<void> {
+    await this.configRepository.writeConfig<number>('auth-server-port', this.getCallbackPort())
     await this.configRepository.writeConfig<OAuthClientInformation>('client-information', clientInformation)
   }
 
@@ -182,9 +208,21 @@ export class AuthCoordinator {
     await this.configRepository.writeConfig<string>('code-verifier', codeVerifier)
   }
 
-  public createRemoteTransport(): StreamableHTTPClientTransport {
-    return new StreamableHTTPClientTransport(this.configRepository.getServerUrl(), {
-      authProvider: new NodeOauthClientProvider(this),
-    })
+  public createRemoteTransport(type: TransportType): Transport {
+    if (type === TransportType.StreamableHTTP) {
+      return new StreamableHTTPClientTransport(this.configRepository.getServerUrl(), {
+        authProvider: this.getAuthProvider(),
+      })
+    } else if (type === TransportType.SSE) {
+      return new SSEClientTransport(this.configRepository.getServerUrl(), {
+        authProvider: this.getAuthProvider(),
+      })
+    }
+
+    throw new Error(`Unsupported transport type: ${type}`)
+  }
+
+  private getAuthProvider(): OAuthClientProvider {
+    return new NodeOauthClientProvider(this)
   }
 }

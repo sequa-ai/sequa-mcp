@@ -5,7 +5,7 @@ import path from 'path'
 import { getServerUrlHash, log } from './utils.js'
 
 export class ConfigRepository {
-  private readonly version = 2
+  private readonly version = 3
   private readonly configDir: string
 
   constructor(private readonly serverUrl: URL) {

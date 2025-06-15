@@ -1,6 +1,6 @@
 {
   "name": "@sequa-ai/sequa-mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A proxy for the Model Context Protocol (MCP) that connects local STDIO with remote MCP servers",
   "keywords": ["mcp", "model-context-protocol", "proxy", "ai", "sequa"],
   "author": "Sequa AI GmbH",
@@ -36,15 +36,15 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.12.3",
     "express": "^5.1.0",
     "open": "^10.1.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.15.29",
-    "@typescript-eslint/eslint-plugin": "^8.33.0",
-    "@typescript-eslint/parser": "^8.33.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
