@@ -7,7 +7,7 @@ import { ConfigRepository } from './helpers/config-repository.js'
 import { McpProxy } from './helpers/mcp-proxy.js'
 import { log, setupShutdownHook } from './helpers/utils.js'
 
-async function startMcp(serverUrl: URL) {
+async function startMcp(serverUrl: URL, apiKey?: string) {
   log(`Starting MCP proxy for ${serverUrl}`)
 
   const configRepository = new ConfigRepository(serverUrl)
@@ -15,7 +15,7 @@ async function startMcp(serverUrl: URL) {
 
   const cleanupFunctions: Array<() => unknown> = [await authCoordinator.startCallbackServer()]
 
-  const remoteTransport = await authCoordinator.initRemoteTransport()
+  const remoteTransport = await authCoordinator.initRemoteTransport(apiKey)
   const localTransport = new StdioServerTransport()
 
   const cleanup = async () => {
@@ -46,14 +46,14 @@ async function startMcp(serverUrl: URL) {
   }
 }
 
-const usage = 'Usage: node index.js <https://server-url>'
+const usage = 'Usage: npx @sequa-ai/sequa-mcp <https://mcp-server-url>'
 CliParser.parseCommandLineArgs(process.argv.slice(2), usage)
   .then(({ positionalArgs }) => {
     if (!positionalArgs[0]) {
       throw new Error('Server URL is required. ' + usage)
     }
 
-    return startMcp(new URL(positionalArgs[0]))
+    return startMcp(new URL(positionalArgs[0]), process.env.API_KEY)
   })
   .catch((error) => {
     log('Fatal error:', error)

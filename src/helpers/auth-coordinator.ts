@@ -100,7 +100,7 @@ export class AuthCoordinator {
     })
   }
 
-  public async initRemoteTransport(): Promise<Transport> {
+  public async initRemoteTransport(apiKey?: string): Promise<Transport> {
     let lockFileCreated = false
     setupShutdownHook(async () => {
       if (lockFileCreated) {
@@ -123,7 +123,7 @@ export class AuthCoordinator {
         lockFileCreated = true
 
         try {
-          const testTransport = this.createRemoteTransport(availableTransports[currentTransportIndex])
+          const testTransport = this.createRemoteTransport(availableTransports[currentTransportIndex], apiKey)
           const testClient = new Client(
             { name: 'sequa-mcp-authentication-test', version: '1.0.0' },
             { capabilities: {} },
@@ -160,7 +160,7 @@ export class AuthCoordinator {
       await new Promise((res) => setTimeout(res, 2000))
     }
 
-    return this.createRemoteTransport(availableTransports[currentTransportIndex])
+    return this.createRemoteTransport(availableTransports[currentTransportIndex], apiKey)
   }
 
   public getServerUrl(): URL {
@@ -209,14 +209,27 @@ export class AuthCoordinator {
     await this.configRepository.writeConfig<string>('code-verifier', codeVerifier)
   }
 
-  private createRemoteTransport(type: TransportType): Transport {
+  private createRemoteTransport(type: TransportType, apiKey?: string): Transport {
+    const customFetch = (url: string | URL, init?: RequestInit) => {
+      if (apiKey) {
+        const headers = new Headers(init?.headers)
+        headers.set('X-Api-Key', apiKey)
+
+        return fetch(url, init ? { ...init, headers } : { headers })
+      }
+
+      return fetch(url, init)
+    }
+
     if (type === TransportType.StreamableHTTP) {
       return new StreamableHTTPClientTransport(this.configRepository.getServerUrl(), {
         authProvider: this.getAuthProvider(),
+        fetch: customFetch,
       })
     } else if (type === TransportType.SSE) {
       return new SSEClientTransport(this.configRepository.getServerUrl(), {
         authProvider: this.getAuthProvider(),
+        fetch: customFetch,
       })
     }
 
