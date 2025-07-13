@@ -129,7 +129,7 @@ export class AuthCoordinator {
             { capabilities: {} },
           )
           await testClient.connect(testTransport)
-          await testTransport.close()
+          await testClient.close()
 
           lockFileCreated = false
           await this.configRepository.deleteConfig('lock')
