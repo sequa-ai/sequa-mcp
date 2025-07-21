@@ -12,6 +12,7 @@ import type { Request, Response } from 'express'
 import express from 'express'
 
 import type { ConfigRepository } from './config-repository.js'
+import type { InvalidateCredentialsScope } from './node-oauth-client-provider.js'
 import { NodeOauthClientProvider } from './node-oauth-client-provider.js'
 import { debugLog, log, setupShutdownHook } from './utils.js'
 
@@ -238,5 +239,19 @@ export class AuthCoordinator {
 
   private getAuthProvider(): OAuthClientProvider {
     return new NodeOauthClientProvider(this)
+  }
+
+  async invalidateCredentials(scope: InvalidateCredentialsScope) {
+    if (scope === 'all' || scope === 'client') {
+      await this.configRepository.deleteConfig('client-information')
+    }
+
+    if (scope === 'all' || scope === 'tokens') {
+      await this.configRepository.deleteConfig('tokens')
+    }
+
+    if (scope === 'all' || scope === 'verifier') {
+      await this.configRepository.deleteConfig('code-verifier')
+    }
   }
 }

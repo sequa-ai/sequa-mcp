@@ -49,11 +49,9 @@ async function startMcp(serverUrl: URL, apiKey?: string) {
 const usage = 'Usage: npx @sequa-ai/sequa-mcp <https://mcp-server-url>'
 CliParser.parseCommandLineArgs(process.argv.slice(2), usage)
   .then(({ positionalArgs }) => {
-    if (!positionalArgs[0]) {
-      throw new Error('Server URL is required. ' + usage)
-    }
+    const serverUrl = positionalArgs[0] || process.env.MCP_SERVER_URL || 'https://mcp.sequa.ai/v1/setup-code-assistant'
 
-    return startMcp(new URL(positionalArgs[0]), process.env.API_KEY)
+    return startMcp(new URL(serverUrl), process.env.API_KEY)
   })
   .catch((error) => {
     log('Fatal error:', error)

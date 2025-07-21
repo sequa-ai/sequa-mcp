@@ -10,9 +10,10 @@ It gives you a **single drop‑in command** that bridges *STDIO/command* MCP tra
 
 Before you configure *any* AI agent:
 
-1. **Create / sign in to your Sequa account** at **[https://app.sequa.ai/login](https://app.sequa.ai/login)**.
+1. **Create / sign in to your Sequa account** at **[https://app.sequa.ai/login](https://app.sequa.ai/login?ref=sequa-mcp)**.
 2. **Setup a Project** inside the Sequa app.
 3. Inside that project, locate the **MCP Setup URLs** and select the transport your AI agent supports.
+4. **Copy the URL or configuration** and install it in your client.
 
 > ❗ *If you skip project creation the MCP server will refuse connections — the proxy can launch but you will receive auth / project errors.*
 
@@ -22,9 +23,10 @@ Before you configure *any* AI agent:
 
 Sequa is a **Contextual Knowledge Engine** that unifies code, documentation, tickets and more across *multiple* repositories and continuously streams that context to any LLM‑powered agent. By injecting deep, current project knowledge, Sequa enables assistants to:
 
-* Understand architecture & cross‑repo tasks
-* Generate more accurate / cohesive code
-* Reduce hallucinations & redundant exploration
+* Execute architecture aware & cross‑repo tasks
+* Understand project goals and state
+* Generate more accurate production ready code
+* Centralize AI coding rules and best practices
 
 ---
 
@@ -41,8 +43,6 @@ npx -y @sequa-ai/sequa-mcp@latest https://mcp.sequa.ai/v1/setup-code-assistant
 ---
 
 ## 🔌 IDE / Tool Configuration
-
-> **Always use the `command` + `args` configuration until your client adds native HTTP transport.** Replace `<endpoint>` below with **either** `v1/setup-code-assistant` (preferred) **or** `v1/setup-code-assistant/sse`.
 
 ### Cursor (`~/.cursor/mcp.json`)
 

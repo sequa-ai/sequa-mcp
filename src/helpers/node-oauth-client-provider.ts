@@ -4,6 +4,8 @@ import open from 'open'
 
 import type { AuthCoordinator } from './auth-coordinator'
 
+export type InvalidateCredentialsScope = 'all' | 'client' | 'tokens' | 'verifier'
+
 export class NodeOauthClientProvider implements OAuthClientProvider {
   constructor(private readonly coordinator: AuthCoordinator) {}
 
@@ -51,5 +53,9 @@ export class NodeOauthClientProvider implements OAuthClientProvider {
 
   public async saveTokens(tokens: OAuthTokens): Promise<void> {
     await this.coordinator.saveTokens(tokens)
+  }
+
+  public async invalidateCredentials(scope: InvalidateCredentialsScope): Promise<void> {
+    await this.coordinator.invalidateCredentials(scope)
   }
 }
