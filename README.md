@@ -21,7 +21,7 @@ Before you configure *any* AI agent:
 
 ## 🤔 What is Sequa?
 
-Sequa is a **Contextual Knowledge Engine** that unifies code, documentation, tickets and more across *multiple* repositories and continuously streams that context to any LLM‑powered agent. By injecting deep, current project knowledge, Sequa enables assistants to:
+Sequa is a **Contextual Knowledge Engine** that unifies code, documentation and more across *multiple* repositories and continuously streams that context to any LLM‑powered agent. By injecting deep, current project knowledge, Sequa enables assistants to:
 
 * Execute architecture aware & cross‑repo tasks
 * Understand project goals and state
