@@ -76,9 +76,15 @@ export class AuthCoordinator {
       const serverPort = await this.configRepository.readConfig<number>('auth-server-port')
       this.server = app.listen(serverPort || 0, (err) => {
         if (err) {
-          log('Error starting authentication server:', err)
+          if ((err as any).code === 'EADDRINUSE') {
+            log(`Authentication server port ${serverPort} is already in use. Probably mcp proxy is already running.`)
 
-          return reject(err)
+            return resolve(() => {})
+          } else {
+            log('Error starting authentication server:', err)
+
+            return reject(err)
+          }
         }
 
         const address = this.server?.address()
