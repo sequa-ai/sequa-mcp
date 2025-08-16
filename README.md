@@ -1,4 +1,5 @@
 # Sequa MCP
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/sequa-ai/sequa-mcp)](https://archestra.ai/mcp-catalog/sequa-ai__sequa-mcp)
 
 This repository is the **entry point for using Sequa via the Model Context Protocol (MCP)**. If you arrived here looking to "add Sequa as an MCP server" to Cursor, Claude, Windsurf, VSCode, Cline, Highlight, Augment, or any other MCP‑capable client — you are in the right place.
 
