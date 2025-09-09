@@ -30,7 +30,13 @@ export class NodeOauthClientProvider implements OAuthClientProvider {
   }
 
   public async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
-    await open(authorizationUrl.toString())
+    const url = authorizationUrl.toString()
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new Error('Invalid authorization url URL')
+    }
+
+    await open(url)
   }
 
   public async codeVerifier(): Promise<string> {
