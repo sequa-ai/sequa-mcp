@@ -14,7 +14,7 @@ import express from 'express'
 import type { ConfigRepository } from './config-repository.js'
 import type { InvalidateCredentialsScope } from './node-oauth-client-provider.js'
 import { NodeOauthClientProvider } from './node-oauth-client-provider.js'
-import { debugLog, log, setupShutdownHook } from './utils.js'
+import { debugLog, log, setupShutdownHook, sleep } from './utils.js'
 
 interface LockData {
   pid: number
@@ -164,7 +164,7 @@ export class AuthCoordinator {
 
       debugLog('Waiting for tokens...')
 
-      await new Promise((res) => setTimeout(res, 2000))
+      await sleep(2000)
     }
 
     return this.createRemoteTransport(availableTransports[currentTransportIndex], apiKey)

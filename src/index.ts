@@ -15,9 +15,6 @@ async function startMcp(serverUrl: URL, apiKey?: string) {
 
   const cleanupFunctions: Array<() => unknown> = [await authCoordinator.startCallbackServer()]
 
-  const remoteTransport = await authCoordinator.initRemoteTransport(apiKey)
-  const localTransport = new StdioServerTransport()
-
   const cleanup = async () => {
     for (const cleanupFunction of cleanupFunctions.reverse()) {
       await cleanupFunction()
@@ -25,16 +22,18 @@ async function startMcp(serverUrl: URL, apiKey?: string) {
   }
 
   try {
-    await McpProxy.createProxy(localTransport, remoteTransport, () => process.exit(0))
-
-    await remoteTransport.start()
-    cleanupFunctions.push(async () => remoteTransport.close())
+    const localTransport = new StdioServerTransport()
+    await McpProxy.createProxy(
+      localTransport,
+      async () => await authCoordinator.initRemoteTransport(apiKey),
+      () => process.exit(0),
+    )
 
     await localTransport.start()
     cleanupFunctions.push(async () => localTransport.close())
 
     log('Local STDIO server running')
-    log(`Proxy established successfully between local STDIO and remote ${remoteTransport.constructor.name}`)
+    log(`Proxy established successfully between local STDIO and remote`)
     log('Press Ctrl+C to exit')
 
     setupShutdownHook(cleanup)
