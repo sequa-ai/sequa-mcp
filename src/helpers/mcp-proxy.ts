@@ -80,10 +80,6 @@ export class McpProxy {
   }
 
   private async handleClientMessage(message: any) {
-    if (isInitializeRequest(message)) {
-      this.initMessage = message
-    }
-
     if (!this.currentRemote) {
       throw new Error('Remote transport is not initialized')
     }
@@ -92,6 +88,10 @@ export class McpProxy {
       log(`[${getTimestamp()}] Client -> Server: ${JSON.stringify(message)}`)
 
       await this.currentRemote.send(message)
+
+      if (isInitializeRequest(message)) {
+        this.initMessage = message
+      }
     } catch (error) {
       log('Error forwarding message to server:', error)
 
