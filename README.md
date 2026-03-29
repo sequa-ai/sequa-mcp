@@ -163,3 +163,8 @@ Or `augment_config.json`:
 }
 ```
 
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/sequa-ai-sequa-mcp).
+
